@@ -26,6 +26,25 @@ def get_current_path():
     """Mendapatkan path direktori saat ini"""
     return os.getcwd()
 
+def get_username():
+    """Mendapatkan username dengan aman"""
+    try:
+        # Coba berbagai metode untuk mendapatkan username
+        if os.name == 'nt':  # Windows
+            return os.environ.get('USERNAME', 'user')
+        else:  # Linux/Mac
+            return os.environ.get('USER', os.environ.get('LOGNAME', 'user'))
+    except:
+        return 'user'
+
+def get_hostname():
+    """Mendapatkan hostname dengan aman"""
+    try:
+        import socket
+        return socket.gethostname()
+    except:
+        return 'botscrapy'
+
 def print_banner():
     """Mencetak banner botscrapy dengan warna merah"""
     width = get_terminal_width()
@@ -44,9 +63,9 @@ def print_input_bar_with_prompt():
     bar_width = min(width - 2, 70)
     current_time = get_current_time()
     
-    # Dapatkan username dan hostname
-    username = os.getlogin() if hasattr(os, 'getlogin') else 'user'
-    hostname = os.uname().nodename if hasattr(os, 'uname') else 'botscrapy'
+    # Dapatkan username dan hostname dengan aman
+    username = get_username()
+    hostname = get_hostname()
     
     # Dapatkan path saat ini (di-singkat)
     current_path = get_current_path()
