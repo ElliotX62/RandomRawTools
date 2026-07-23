@@ -29,7 +29,6 @@ def get_current_path():
 def get_username():
     """Mendapatkan username dengan aman"""
     try:
-        # Coba berbagai metode untuk mendapatkan username
         if os.name == 'nt':  # Windows
             return os.environ.get('USERNAME', 'user')
         else:  # Linux/Mac
@@ -58,7 +57,7 @@ def print_banner():
     print()  # Spasi setelah banner
 
 def print_input_bar_with_prompt():
-    """Mencetak input bar dengan gaya Linux dan waktu real-time"""
+    """Mencetak input bar dengan input di dalam kotak"""
     width = get_terminal_width()
     bar_width = min(width - 2, 70)
     current_time = get_current_time()
@@ -89,7 +88,10 @@ def print_input_bar_with_prompt():
     
     print(f"\033[1;31m│\033[0m \033[1;33m{prompt_display}\033[0m" + " " * padding + f"\033[1;37m{time_str}\033[0m \033[1;31m│\033[0m")
     
-    # Baris kedua: arrow dan placeholder untuk input
+    # Baris kedua: garis pemisah
+    print("\033[1;31m├" + "─" * bar_width + "┤\033[0m")
+    
+    # Baris ketiga: arrow dan input placeholder
     arrow_line = "└─$ "
     placeholder = "Masukkan URL target (http:// atau https://)"
     
@@ -102,7 +104,10 @@ def print_input_bar_with_prompt():
     
     # Garis bawah
     print("\033[1;31m└" + "─" * bar_width + "┘\033[0m")
-    print()
+    
+    # Kembali ke baris untuk input (di dalam kotak)
+    # Pindahkan kursor ke posisi setelah arrow
+    print("\033[1;31m└─$ \033[0m", end='')
 
 def print_status_bar(message, status_type='info'):
     """Mencetak status bar dengan warna sesuai tipe"""
@@ -254,7 +259,7 @@ def main():
         # Tampilkan input bar dengan prompt Linux dan timestamp
         print_input_bar_with_prompt()
         
-        # Ambil input dari user (tanpa prompt tambahan)
+        # Ambil input dari user (langsung di dalam kotak)
         user_input = input().strip()
         
         # Cek perintah khusus
