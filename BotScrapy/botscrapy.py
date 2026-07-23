@@ -107,6 +107,42 @@ def print_prompt():
     print(f"\033[1;31m├──\033[0m \033[1;33m[{current_time}]\033[0m \033[1;37mMasukkan URL target (http:// atau https://):\033[0m")
     print("\033[1;31m└─$ \033[0m", end='')
 
+def print_prompt_simple():
+    """Mencetak prompt sederhana untuk mode tertentu (tanpa timestamp)"""
+    # Dapatkan username dan hostname
+    username = get_username()
+    hostname = get_hostname()
+    
+    # Dapatkan path saat ini (di-singkat)
+    current_path = get_current_path()
+    home = os.path.expanduser('~')
+    if current_path.startswith(home):
+        current_path = '~' + current_path[len(home):]
+    
+    # Cetak prompt sederhana
+    print(f"\033[1;31m┌──({username}@{hostname})-[{current_path}]\033[0m")
+    print("\033[1;31m└─$ \033[0m", end='')
+
+def print_prompt_with_prompt(prompt_text):
+    """Mencetak prompt dengan teks tambahan"""
+    # Dapatkan username dan hostname
+    username = get_username()
+    hostname = get_hostname()
+    
+    # Dapatkan path saat ini (di-singkat)
+    current_path = get_current_path()
+    home = os.path.expanduser('~')
+    if current_path.startswith(home):
+        current_path = '~' + current_path[len(home):]
+    
+    # Dapatkan waktu saat ini
+    current_time = get_current_time()
+    
+    # Cetak prompt dengan teks tambahan
+    print(f"\033[1;31m┌──({username}@{hostname})-[{current_path}]\033[0m")
+    print(f"\033[1;31m├──\033[0m \033[1;33m[{current_time}]\033[0m \033[1;37m{prompt_text}\033[0m")
+    print("\033[1;31m└─$ \033[0m", end='')
+
 def display_database_content(db):
     """Menampilkan isi database dalam format tabel"""
     clear_screen()
@@ -119,7 +155,10 @@ def display_database_content(db):
     
     if not targets:
         print_status_bar("Database kosong! Belum ada target tersimpan.", 'warning')
-        input("\n\033[1;37mTekan Enter untuk kembali...\033[0m")
+        print()
+        print_prompt_simple()
+        # Tunggu input untuk kembali
+        input()
         return
     
     # Buat header tabel
@@ -166,38 +205,101 @@ def display_database_content(db):
     print("\033[1;33mOpsi:\033[0m")
     print("  \033[1;36m[1]\033[0m Hapus semua data")
     print("  \033[1;36m[2]\033[0m Hapus berdasarkan ID")
+    print("  \033[1;36m[3]\033[0m Keluar (exit)")
     print("  \033[1;36m[Enter]\033[0m Kembali")
     print()
     
-    choice = input("\033[1;31m└─$ \033[0m").strip()
-    
-    if choice == '1':
-        # Hapus semua data
-        confirm = input("\033[1;31mYakin ingin menghapus semua data? (y/n): \033[0m").strip().lower()
-        if confirm == 'y':
-            db.delete_all_targets()
-            print_status_bar("Semua data berhasil dihapus!", 'success')
-            input("\n\033[1;37mTekan Enter untuk melanjutkan...\033[0m")
-    elif choice == '2':
-        # Hapus berdasarkan ID
-        try:
-            target_id = int(input("\033[1;33mMasukkan ID target yang akan dihapus: \033[0m").strip())
-            target = db.get_target_by_id(target_id)
-            if target:
-                confirm = input(f"\033[1;31mYakin ingin menghapus target ID {target_id}? (y/n): \033[0m").strip().lower()
-                if confirm == 'y':
-                    db.delete_target(target_id)
-                    print_status_bar(f"Target ID {target_id} berhasil dihapus!", 'success')
+    # Loop untuk validasi input opsi
+    while True:
+        print_prompt_simple()
+        choice = input().strip()
+        
+        if choice == '1':
+            # Hapus semua data
+            confirm = input("\033[1;31mYakin ingin menghapus semua data? (y/n): \033[0m").strip().lower()
+            if confirm == 'y':
+                db.delete_all_targets()
+                print_status_bar("Semua data berhasil dihapus!", 'success')
+                print()
+                print_prompt_simple()
+                input("Tekan Enter untuk melanjutkan...")
+                break
             else:
-                print_status_bar(f"Target dengan ID {target_id} tidak ditemukan!", 'error')
-        except ValueError:
-            print_status_bar("ID harus berupa angka!", 'error')
-        input("\n\033[1;37mTekan Enter untuk melanjutkan...\033[0m")
+                print_status_bar("Penghapusan dibatalkan!", 'warning')
+                print()
+                continue
+                
+        elif choice == '2':
+            # Hapus berdasarkan ID
+            while True:
+                print_prompt_with_prompt("Masukkan ID target yang akan dihapus (atau ketik 'batal' untuk kembali):")
+                id_input = input().strip()
+                
+                if id_input.lower() == 'batal':
+                    print_status_bar("Dibatalkan!", 'warning')
+                    print()
+                    break
+                
+                try:
+                    target_id = int(id_input)
+                    target = db.get_target_by_id(target_id)
+                    if target:
+                        confirm = input(f"\033[1;31mYakin ingin menghapus target ID {target_id}? (y/n): \033[0m").strip().lower()
+                        if confirm == 'y':
+                            db.delete_target(target_id)
+                            print_status_bar(f"Target ID {target_id} berhasil dihapus!", 'success')
+                            print()
+                            print_prompt_simple()
+                            input("Tekan Enter untuk melanjutkan...")
+                            break
+                        else:
+                            print_status_bar("Penghapusan dibatalkan!", 'warning')
+                            print()
+                            break
+                    else:
+                        print_status_bar(f"Target dengan ID {target_id} tidak ditemukan!", 'error')
+                        print()
+                        continue
+                except ValueError:
+                    print_status_bar("ID harus berupa angka! (atau ketik 'batal' untuk kembali)", 'error')
+                    print()
+                    continue
+            
+            # Keluar dari loop setelah selesai atau batal
+            break
+                
+        elif choice == '3':
+            # Keluar dari program
+            exit_program()
+            
+        elif choice == '':
+            # Kembali ke menu utama
+            return
+            
+        else:
+            # Input tidak valid
+            print_status_bar(f"ERROR: Opsi '{choice}' tidak dikenal!", 'error')
+            print()
+            print("\033[1;33mOpsi yang tersedia:\033[0m")
+            print("  \033[1;36m[1]\033[0m Hapus semua data")
+            print("  \033[1;36m[2]\033[0m Hapus berdasarkan ID")
+            print("  \033[1;36m[3]\033[0m Keluar (exit)")
+            print("  \033[1;36m[Enter]\033[0m Kembali")
+            print()
+            continue
 
 def validate_url(url):
-    """Memvalidasi apakah URL memiliki awalan http:// atau https://"""
-    pattern = re.compile(r'^https?://.+', re.IGNORECASE)
-    return bool(pattern.match(url.strip()))
+    """Memvalidasi URL harus diawali http:// atau https:// dan mengandung .com"""
+    # Cek apakah diawali http:// atau https://
+    pattern_protocol = re.compile(r'^https?://.+', re.IGNORECASE)
+    if not pattern_protocol.match(url.strip()):
+        return False, "URL harus diawali dengan http:// atau https://"
+    
+    # Cek apakah mengandung .com
+    if '.com' not in url.lower():
+        return False, "URL harus mengandung .com"
+    
+    return True, "Valid"
 
 def exit_program():
     """Fungsi untuk keluar dari program"""
@@ -239,8 +341,11 @@ def main():
             print_status_bar("ERROR: Input tidak boleh kosong!", 'error')
             input("\n\033[1;37mTekan Enter untuk mencoba lagi...\033[0m")
             continue
-            
-        if validate_url(user_input):
+        
+        # Validasi URL
+        is_valid, error_message = validate_url(user_input)
+        
+        if is_valid:
             # Simpan ke database
             target_id = db.insert_target(user_input)
             
@@ -260,16 +365,20 @@ def main():
                 print_status_bar("Gagal menyimpan ke database!", 'error')
                 input("\n\033[1;37mTekan Enter untuk mencoba lagi...\033[0m")
         else:
-            # Input tidak valid
+            # Input tidak valid - tampilkan error spesifik
             clear_screen()
             print_banner()
-            print_status_bar(f"ERROR: URL harus diawali dengan http:// atau https://", 'error')
+            print_status_bar(f"ERROR: {error_message}", 'error')
             print_status_bar(f"Input Anda: {user_input}", 'error')
             print()
             print("\033[1;33mContoh URL yang benar:\033[0m")
             print("  \033[1;32m•\033[0m https://www.example.com")
-            print("  \033[1;32m•\033[0m http://localhost:8000")
             print("  \033[1;32m•\033[0m https://google.com")
+            print("  \033[1;32m•\033[0m http://example.com")
+            print()
+            print("\033[1;33mCatatan:\033[0m")
+            print("  \033[1;37m•\033[0m URL harus diawali http:// atau https://")
+            print("  \033[1;37m•\033[0m URL harus mengandung .com")
             print()
             input("\033[1;37mTekan Enter untuk mencoba lagi...\033[0m")
 
