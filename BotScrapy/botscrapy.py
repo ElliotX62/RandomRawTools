@@ -102,9 +102,9 @@ def print_prompt():
     # Dapatkan waktu saat ini
     current_time = get_current_time()
     
-    # Cetak prompt dengan warna merah
-    print(f"\033[1;31m({username}@{hostname})-[{current_path}]\033[0m")
-    print(f"\033[1;31m└─$ \033[0m\033[1;33m[{current_time}] \033[0m\033[1;37mMasukkan URL target (http:// atau https://):\033[0m")
+    # Cetak prompt dengan garis siku menyambung
+    print(f"\033[1;31m┌──({username}@{hostname})-[{current_path}]\033[0m")
+    print(f"\033[1;31m├──\033[0m \033[1;33m[{current_time}]\033[0m \033[1;37mMasukkan URL target (http:// atau https://):\033[0m")
     print("\033[1;31m└─$ \033[0m", end='')
 
 def display_database_content(db):
