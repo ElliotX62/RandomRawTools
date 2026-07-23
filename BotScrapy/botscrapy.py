@@ -2,7 +2,6 @@ import os
 import re
 import sys
 import shutil
-import subprocess
 from datetime import datetime
 from pyfiglet import Figlet
 from database import Database
@@ -56,59 +55,6 @@ def print_banner():
     print("\033[1;31m" + banner_text + "\033[0m")
     print()  # Spasi setelah banner
 
-def print_input_bar_with_prompt():
-    """Mencetak input bar dengan input di dalam kotak"""
-    width = get_terminal_width()
-    bar_width = min(width - 2, 70)
-    current_time = get_current_time()
-    
-    # Dapatkan username dan hostname dengan aman
-    username = get_username()
-    hostname = get_hostname()
-    
-    # Dapatkan path saat ini (di-singkat)
-    current_path = get_current_path()
-    home = os.path.expanduser('~')
-    if current_path.startswith(home):
-        current_path = '~' + current_path[len(home):]
-    
-    # Format prompt
-    prompt_display = f"({username}@{hostname})-[{current_path}]"
-    
-    # Buat garis input bar dengan warna merah
-    print("\033[1;31m┌" + "─" * bar_width + "┐\033[0m")
-    
-    # Baris pertama: prompt dan waktu (rata kanan)
-    time_str = f"⏰ {current_time}"
-    
-    # Hitung padding untuk rata kanan waktu
-    padding = bar_width - len(prompt_display) - len(time_str) - 4
-    if padding < 1:
-        padding = 1
-    
-    print(f"\033[1;31m│\033[0m \033[1;33m{prompt_display}\033[0m" + " " * padding + f"\033[1;37m{time_str}\033[0m \033[1;31m│\033[0m")
-    
-    # Baris kedua: garis pemisah
-    print("\033[1;31m├" + "─" * bar_width + "┤\033[0m")
-    
-    # Baris ketiga: arrow dan input placeholder
-    arrow_line = "└─$ "
-    placeholder = "Masukkan URL target (http:// atau https://)"
-    
-    # Hitung padding untuk placeholder
-    padding2 = bar_width - len(arrow_line) - len(placeholder) - 2
-    if padding2 < 1:
-        padding2 = 1
-    
-    print(f"\033[1;31m│\033[0m \033[1;31m{arrow_line}\033[0m\033[1;33m{placeholder}\033[0m" + " " * padding2 + "\033[1;31m│\033[0m")
-    
-    # Garis bawah
-    print("\033[1;31m└" + "─" * bar_width + "┘\033[0m")
-    
-    # Kembali ke baris untuk input (di dalam kotak)
-    # Pindahkan kursor ke posisi setelah arrow
-    print("\033[1;31m└─$ \033[0m", end='')
-
 def print_status_bar(message, status_type='info'):
     """Mencetak status bar dengan warna sesuai tipe"""
     width = get_terminal_width()
@@ -140,6 +86,62 @@ def print_status_bar(message, status_type='info'):
     print(color + "│" + "\033[0m " + msg + " " * padding + color + "│\033[0m")
     print(color + "└" + "─" * bar_width + "┘\033[0m")
     print()
+
+def get_user_input():
+    """Fungsi untuk mendapatkan input dengan kotak"""
+    width = get_terminal_width()
+    bar_width = min(width - 2, 70)
+    current_time = get_current_time()
+    
+    # Dapatkan username dan hostname dengan aman
+    username = get_username()
+    hostname = get_hostname()
+    
+    # Dapatkan path saat ini (di-singkat)
+    current_path = get_current_path()
+    home = os.path.expanduser('~')
+    if current_path.startswith(home):
+        current_path = '~' + current_path[len(home):]
+    
+    # Format prompt
+    prompt_display = f"({username}@{hostname})-[{current_path}]"
+    
+    # Buat kotak input
+    print("\033[1;31m┌" + "─" * bar_width + "┐\033[0m")
+    
+    # Baris pertama: prompt dan waktu
+    time_str = f"⏰ {current_time}"
+    padding = bar_width - len(prompt_display) - len(time_str) - 4
+    if padding < 1:
+        padding = 1
+    
+    print(f"\033[1;31m│\033[0m \033[1;33m{prompt_display}\033[0m" + " " * padding + f"\033[1;37m{time_str}\033[0m \033[1;31m│\033[0m")
+    
+    # Baris kedua: garis pemisah
+    print("\033[1;31m├" + "─" * bar_width + "┤\033[0m")
+    
+    # Baris ketiga: tempat input dengan arrow
+    arrow_line = "└─$ "
+    
+    # Cetak baris dengan arrow di dalam kotak
+    print(f"\033[1;31m│\033[0m \033[1;31m{arrow_line}\033[0m", end='')
+    
+    # Ambil input dari user (cursor akan berada setelah arrow di dalam kotak)
+    user_input = input().strip()
+    
+    # Hitung sisa padding untuk menutup kotak
+    remaining = bar_width - len(arrow_line) - len(user_input) - 2
+    if remaining < 1:
+        remaining = 1
+    
+    # Cetak sisa padding dan tutup kotak
+    print(" " * remaining + "\033[1;31m│\033[0m")
+    
+    # Garis bawah kotak
+    print("\033[1;31m└" + "─" * bar_width + "┘\033[0m")
+    print()
+    
+    return user_input
 
 def display_database_content(db):
     """Menampilkan isi database dalam format tabel"""
@@ -256,11 +258,8 @@ def main():
         if box:
             print_status_bar(f"URL tersimpan: {box}", 'success')
         
-        # Tampilkan input bar dengan prompt Linux dan timestamp
-        print_input_bar_with_prompt()
-        
-        # Ambil input dari user (langsung di dalam kotak)
-        user_input = input().strip()
+        # Tampilkan kotak input dan ambil input dari user
+        user_input = get_user_input()
         
         # Cek perintah khusus
         if user_input.lower() == '/showsql':
